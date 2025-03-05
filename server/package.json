@@ -1,0 +1,22 @@
+{
+  "name": "server",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "node index.ts",
+    "dev": "nodemon index.ts",
+    "test": "jest --detectOpenHandles"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@tsconfig/node23": "^23.0.0",
+    "@types/node": "^22.13.9",
+    "nodemon": "^3.1.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,20 +1,30 @@
 {
-  "name": "sinchchat",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "name": "sinchChat",
+  "version": "0.0.1",
+  "workspaces": [
+    "./client/*",
+    "./server/*"
+  ],
+  "engines": {
+    "node": "23.7.0",
+    "npm": "10.9.2"
   },
+  "scripts": {
+    "dev": "concurrently \"npm --prefix packages/server run dev\" \"npm --prefix packages/client run dev\""
+  },
+  "author": "Alvaro Ortega",
+  "license": "ISC",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/alvaroortega/sinchChat.git"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
   "bugs": {
     "url": "https://github.com/alvaroortega/sinchChat/issues"
   },
-  "homepage": "https://github.com/alvaroortega/sinchChat#readme"
+  "homepage": "https://github.com/alvaroortega/sinchChat#readme",
+  "description": "",
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
 }
