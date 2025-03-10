@@ -11,7 +11,7 @@ import type { Messages, NewMessageEvent } from "../types/types.ts";
 
 const PARTITION_KEY = "conversation";
 
-export default class DiscussionsService {
+export default class MessageService {
   private tableName = "Messages";
   public dbClient: DynamoDBClient;
   public redisPublisher: Redis;
@@ -52,7 +52,7 @@ export default class DiscussionsService {
   }
 
   async fetchMessages(
-    limit: number = 50,
+    limit: number = 20,
     lastEvaluatedKey: Record<string, AttributeValue> | undefined = undefined
   ): Promise<Messages> {
     const params = {

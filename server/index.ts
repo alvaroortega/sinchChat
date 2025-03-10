@@ -30,14 +30,14 @@ const sortMessages = (messages: Message[]): Message[] => {
   );
 }
 
-async function handleUserRegistration(ws: WebSocket, command: string, payload: UserPayload) {
+async function handleUserRegistration(ws: WebSocket, command: string, payload: UserPayload, sessionId: string) {
   switch (command) {
     case "SIGN_IN":
       try {
         const { userName = "" } = payload;
-        await userRegService.registerUser(ws, userName);
+        await userRegService.registerUser(userName, sessionId);
         await socketManager.addUser(userName, ws);
-        const newestMessages = await messService.fetchMessages(10);
+        const newestMessages = await messService.fetchMessages();
         ws.send(JSON.stringify({
           type: "SIGNED_IN",
           data: {
@@ -46,7 +46,7 @@ async function handleUserRegistration(ws: WebSocket, command: string, payload: U
             messages: sortMessages(newestMessages.messages)
           }
         }))
-      } catch (error) {
+      } catch (error: any) {
         ws.send(JSON.stringify({
           type: "ERROR",
           message: error.message
@@ -54,7 +54,7 @@ async function handleUserRegistration(ws: WebSocket, command: string, payload: U
       }
       break;
     case "SIGN_OUT":
-      const user = await userRegService.getUsername(ws);
+      const user = await userRegService.getUsername(sessionId);
       if (!user) {
         ws.send(JSON.stringify({
           type: "ERROR",
@@ -62,13 +62,13 @@ async function handleUserRegistration(ws: WebSocket, command: string, payload: U
         }));
       } else {
         try {
-          await userRegService.deleteUser(ws);
+          await userRegService.deleteUser(sessionId);
           await socketManager.removeUser(user);
           ws.send(JSON.stringify({
             type: "SIGNED_OUT",
             message: `${user} logged out`
           }));
-        } catch (error) {
+        } catch (_) {
           ws.send(JSON.stringify({
             type: "ERROR",
             message: `${user} could not be logged out properly`
@@ -84,12 +84,12 @@ async function handleUserRegistration(ws: WebSocket, command: string, payload: U
   }
 }
 
-async function handleDiscussionsCommands(ws: WebSocket, command: string, payload: DiscussionPayload) {
+async function handleDiscussionsCommands(ws: WebSocket, command: string, payload: DiscussionPayload, sessionId: string) {
   switch (command) {
     case "NEW_MESSAGE":
       try {
         const { message = "" } = payload
-        const userName = await userRegService.getUsername(ws);
+        const userName = await userRegService.getUsername(sessionId);
 
         if (!userName) {
           ws.send(JSON.stringify({
@@ -106,8 +106,7 @@ async function handleDiscussionsCommands(ws: WebSocket, command: string, payload
             message, userName, createdAt
           }
         }));
-      } catch (error) {
-        console.log('HELLOOOOOOOOOOOO')
+      } catch (error: any) {
         ws.send(JSON.stringify({
           type: "ERROR",
           message: error.message
@@ -122,7 +121,7 @@ async function handleDiscussionsCommands(ws: WebSocket, command: string, payload
           lastKey = JSON.parse(payload.lastEvaluatedKey);
         }
 
-        const nextBatch = await messService.fetchMessages(10, lastKey);
+        const nextBatch = await messService.fetchMessages(20, lastKey);
         ws.send(JSON.stringify({
           type: "MESSAGE_HISTORY",
           messages: sortMessages(nextBatch.messages),
@@ -132,7 +131,7 @@ async function handleDiscussionsCommands(ws: WebSocket, command: string, payload
           totalMessages: nextBatch.totalMessages
         }));
 
-      } catch (error) {
+      } catch (error: any) {
         ws.send(JSON.stringify({
           type: "ERROR",
           message: error.message
@@ -147,23 +146,27 @@ async function handleDiscussionsCommands(ws: WebSocket, command: string, payload
   }
 }
 
-wss.on("connection", (ws: WebSocket) => {
+wss.on("connection", (ws: WebSocket, req) => {
+  const ip = req.socket.remoteAddress;
+  const port = req.socket.remotePort;
+  const sessionId = `${ip}:${port}`;
+
   ws.on("message", async data => {
     try {
-      const parsedData = JSON.parse(data);
+      const parsedData = JSON.parse(data.toString());
       const { command, payload } = parsedData;
 
       if (["SIGN_IN", "SIGN_OUT"].includes(command)) {
-        await handleUserRegistration(ws, command, payload);
+        await handleUserRegistration(ws, command, payload, sessionId);
       } else if (["NEW_MESSAGE", "GET_MORE_MESSAGES"].includes(command)) {
-        await handleDiscussionsCommands(ws, command, payload);
+        await handleDiscussionsCommands(ws, command, payload, sessionId);
       } else {
         ws.send(JSON.stringify({
           type: "ERROR",
           message: "Invalid command"
         }));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Invalid message format:", error);
       ws.send(JSON.stringify({
         type: "ERROR",
@@ -174,12 +177,12 @@ wss.on("connection", (ws: WebSocket) => {
 
   ws.on("close", async () => {
     console.log("Client disconnected");
-    await userRegService.deleteUser(ws);
+    await userRegService.deleteUser(sessionId);
   });
 
   ws.on("error", async err => {
     console.error(`WebSocket error: ${err.message}`);
-    await userRegService.deleteUser(ws);
+    await userRegService.deleteUser(sessionId);
   });
 })
 
@@ -219,7 +222,7 @@ redisSubscriber.on("message", (channel: string, data: string) => {
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error processing new_message_created event:", error);
     }
   }

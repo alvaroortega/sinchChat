@@ -58,6 +58,7 @@ export function useWebSocket(): UseWebSocketParams {
           });
           break;
         case "SIGNED_OUT":
+          setUserLoggedIn(false);
           setUserName("");
           break;
         case "NEW_MESSAGE_CREATED":

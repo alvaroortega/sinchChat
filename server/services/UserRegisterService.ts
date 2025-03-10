@@ -1,5 +1,4 @@
 import { DynamoDBClient, PutItemCommand, QueryCommand, DeleteItemCommand } from "@aws-sdk/client-dynamodb";
-import WebSocket from "ws";
 import { accessKeyId, secretAccessKey } from "../config/keys.ts";
 
 export default class UserRegisterService {
@@ -14,12 +13,10 @@ export default class UserRegisterService {
     });
   }
 
-  async registerUser(socket: WebSocket, userName: string) {
+  async registerUser(userName: string, sessionId: string) {
     if (!userName) {
       throw new Error("Username is required");
     }
-
-    const sessionId = `${socket._socket.remoteAddress}:${socket._socket.remotePort}`;
 
     const params = new PutItemCommand({
       TableName: this.tableName,
@@ -33,8 +30,7 @@ export default class UserRegisterService {
     await this.dbClient.send(params);
   }
 
-  async getUsername(socket: WebSocket): Promise<string | null> {
-    const sessionId = `${socket._socket.remoteAddress}:${socket._socket.remotePort}`;
+  async getUsername(sessionId: string): Promise<string | null> {
     const params = new QueryCommand({
       TableName: this.tableName,
       IndexName: "GSI_SessionLookup",
@@ -54,8 +50,8 @@ export default class UserRegisterService {
     }
   }
 
-  async deleteUser(socket: WebSocket) {
-    const userName = await this.getUsername(socket);
+  async deleteUser(sessionId: string) {
+    const userName = await this.getUsername(sessionId);
 
     if (!userName) {
       console.error("User not found");
