@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { Button, Card, List, Typography, Avatar } from "antd";
+import { Button, Card, Input, List, Typography, Avatar } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import classNames from "classnames";
 import { WSContext } from "../App";
@@ -69,8 +69,15 @@ const ChatRoom: React.FC = () => {
   const isMessageFromUser = (msg: Message): boolean => msg.userName === userName;
 
   return (
-    <div>
-      <button onClick={handleLogout}>Logout</button>
+    <div className="chatContainer--div">
+      <Button
+        className="logout--button"
+        color="green"
+        variant="outlined"
+        onClick={handleLogout}
+      >
+        Logout
+      </Button>
       <Card
         title="Chat Room"
         className="messages--card">
@@ -83,7 +90,8 @@ const ChatRoom: React.FC = () => {
         >
           {showLoadMore && messages?.lastEvaluatedKey && (
             <Button
-              type="primary"
+              color="green"
+              variant="dashed"
               onClick={loadMore}
               className="loadMore--button"
             >
@@ -131,10 +139,16 @@ const ChatRoom: React.FC = () => {
             )}
           />
         </div>
-        <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type a message..." />
-        <button onClick={handleSend}>Send</button>
-      </Card >
-    </div >
+        <div className="inputContainer--div">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Type a message..."
+          />
+          <Button color="green" variant="outlined" onClick={handleSend}>Send</Button>
+        </div>
+      </Card>
+    </div>
   );
 }
 

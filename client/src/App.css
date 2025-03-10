@@ -3,12 +3,40 @@
   width: 100%;
 }
 
+.loginContainer--card {
+  height: 100vh;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.inputContainer--div {
+  display: flex;
+  gap: 10px;
+}
+
+.ant-input-outlined:hover {
+  border-color: #52c41a !important;
+}
+
+.ant-input-outlined:focus,
+.ant-input-affix-wrapper-focused {
+  border-color: #52c41a !important;
+  box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.2) !important;
+}
+
 .error--input {
   color: red;
 }
 
+.chatContainer--div {
+  margin: 50px;
+}
+
 .messages--card {
-  margin-top: 15px;
+  margin: 30px;
 }
 
 .loadMore--button {
@@ -25,30 +53,38 @@
   border: 1px solid #ddd;
   padding: 8px;
   position: relative;
+  margin-bottom: 15px;
+  border-radius: 8px;
+
+  .messagesItem--user1 {
+    display: flex !important;
+    justify-content: flex-start !important;
+  }
+
+  .messagesItem--user2 {
+    display: flex !important;
+    justify-content: flex-end !important;
+  }
+
+  .messageCard--user1 {
+    width: 45%;
+    margin-left: 10px;
+    background: #DCF8C6;
+    text-align: left;
+  }
+
+  .messageCard--user2 {
+    width: 45%;
+    margin-right: 10px;
+    background: #F0F0F0;
+    text-align: left;
+  }
 }
 
-.messagesItem--user1 {
-  display: flex !important;
-  justify-content: flex-start !important;
-}
-
-.messagesItem--user2 {
-  display: flex !important;
-  justify-content: flex-end !important;
-}
-
-.messageCard--user1 {
-  width: 45%;
-  margin-left: 10px;
-  background: #DCF8C6;
-  text-align: left;
-}
-
-.messageCard--user2 {
-  width: 45%;
-  margin-right: 10px;
-  background: #F0F0F0;
-  text-align: left;
+.logout--button {
+  display: block;
+  margin-left: auto;
+  margin-right: 30px;
 }
 
 .message--avatar {

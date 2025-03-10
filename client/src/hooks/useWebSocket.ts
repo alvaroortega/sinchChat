@@ -8,20 +8,21 @@ export interface UseWebSocketParams {
   sendMessage: (message: WebSocketData) => void;
   userName: string;
   setUserName: (userName: string) => void;
+  error: string | null;
+  socketError: boolean;
+  setSocketError: (socketError: boolean) => void
 };
 
 export function useWebSocket(): UseWebSocketParams {
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [messages, setMessages] = useState<Messages | null>(null);
   const [userName, setUserName] = useState<string>("")
+  const [error, setError] = useState<string | null>(null)
+  const [socketError, setSocketError] = useState<boolean>(false)
 
   const messagesRef = useRef<Messages | null>(null);
 
   const sendMessage = useCallback((message: WebSocketData) => {
-    console.log('==============================')
-    console.log(message)
-    console.log(ws)
-    console.log('==============================')
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(message));
     }
@@ -44,10 +45,6 @@ export function useWebSocket(): UseWebSocketParams {
 
     socket.onmessage = event => {
       const data = JSON.parse(event.data);
-
-      console.log('##############################################')
-      console.log(data);
-      console.log('##############################################')
 
       switch (data.type) {
         case "SIGNED_IN":
@@ -82,12 +79,14 @@ export function useWebSocket(): UseWebSocketParams {
           });
           break;
         case "ERROR":
+          setError(data.message)
           break;
       }
     };
 
-    socket.onerror = (error) => {
-      throw new Error(`WebSocket error:, ${error}`)
+    socket.onerror = () => {
+      setUserName("");
+      setSocketError(true)
     };
 
     setWs(socket);
@@ -97,5 +96,5 @@ export function useWebSocket(): UseWebSocketParams {
     };
   }, [userName]);
 
-  return { messages, sendMessage, userName, setUserName };
+  return { messages, sendMessage, userName, setUserName, error, socketError, setSocketError };
 }

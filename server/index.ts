@@ -49,7 +49,7 @@ async function handleUserRegistration(ws: WebSocket, command: string, payload: U
       } catch (error) {
         ws.send(JSON.stringify({
           type: "ERROR",
-          mesage: `ERROR: ${error.message}`
+          mesage: error.message
         }));
       }
       break;
