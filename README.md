@@ -12,7 +12,7 @@ I have opted for DynamoDB to store user sessions and messages. This is a solutio
 Since the application is simple enough? I am rendering the different components baed on context properties values. If the application would have been more complex, it would scale better to use React router for instance.
 
 ## Architecture of the system
-![Architecture schema](/assets/SinchChat.png)
+![Architecture schema](/assets/Sinch_Chat.png)
 
 ## Bootstrap
 
