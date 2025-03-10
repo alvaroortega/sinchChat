@@ -1,42 +1,71 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
   text-align: center;
+  width: 100%;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.error--input {
+  color: red;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.messages--card {
+  margin-top: 15px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.loadMore--button {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
 }
 
-.card {
-  padding: 2em;
+.messagesContent--div {
+  max-height: 500px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  padding: 8px;
+  position: relative;
 }
 
-.read-the-docs {
-  color: #888;
+.messagesItem--user1 {
+  display: flex !important;
+  justify-content: flex-start !important;
+}
+
+.messagesItem--user2 {
+  display: flex !important;
+  justify-content: flex-end !important;
+}
+
+.messageCard--user1 {
+  width: 45%;
+  margin-left: 10px;
+  background: #DCF8C6;
+  text-align: left;
+}
+
+.messageCard--user2 {
+  width: 45%;
+  margin-right: 10px;
+  background: #F0F0F0;
+  text-align: left;
+}
+
+.message--avatar {
+  position: relative;
+  top: -5px;
+}
+
+.avatarTitle--user1 {
+  color: blue;
+}
+
+.avatarTitle--user2 {
+  color: black;
+}
+
+.messagesDateText {
+  display: block;
+  text-align: right;
+  font-size: 12px;
 }

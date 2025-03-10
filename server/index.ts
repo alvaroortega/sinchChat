@@ -4,14 +4,14 @@ import { AttributeValue } from "@aws-sdk/client-dynamodb";
 import socketManager from "./SocketManager.ts";
 import UserRegisterService from "./services/UserRegisterService.ts"
 import MessagesService from "./services/MessagesService.ts";
-import type { NewMessageEvent } from "./types/types.ts";
+import type { Message, NewMessageEvent } from "./types/types.ts";
 
 interface UserPayload {
   userName?: string;
 }
 
-interface NewMessagePayload {
-  message: string;
+interface DiscussionPayload {
+  message?: string;
   lastEvaluatedKey?: string;
 }
 
@@ -24,50 +24,93 @@ const messService = new MessagesService();
 
 const redisSubscriber = new Redis({ host: "localhost", port: 6379 });
 
+const sortMessages = (messages: Message[]): Message[] => {
+  return messages.slice().sort((a, b) =>
+    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
+}
+
 async function handleUserRegistration(ws: WebSocket, command: string, payload: UserPayload) {
-  const { userName = "" } = payload;
   switch (command) {
     case "SIGN_IN":
       try {
+        const { userName = "" } = payload;
         await userRegService.registerUser(ws, userName);
         await socketManager.addUser(userName, ws);
-        const newestMessages = await messService.fetchMessages();
-        ws.send(`${newestMessages}\n`);
+        const newestMessages = await messService.fetchMessages(10);
+        ws.send(JSON.stringify({
+          type: "SIGNED_IN",
+          data: {
+            ...newestMessages,
+            lastEvaluatedKey: JSON.stringify(newestMessages.lastEvaluatedKey),
+            messages: sortMessages(newestMessages.messages)
+          }
+        }))
       } catch (error) {
-        ws.send(`ERROR: ${error}\n`);
+        ws.send(JSON.stringify({
+          type: "ERROR",
+          mesage: `ERROR: ${error.message}`
+        }));
       }
       break;
     case "SIGN_OUT":
       const user = await userRegService.getUsername(ws);
       if (!user) {
-        ws.send("ERROR: User does not exists\n");
+        ws.send(JSON.stringify({
+          type: "ERROR",
+          mesage: "User does not exists"
+        }));
       } else {
-        await userRegService.deleteUser(ws);
-        await socketManager.removeUser(user);
-        ws.send(`${user} logged out\n`);
+        try {
+          await userRegService.deleteUser(ws);
+          await socketManager.removeUser(user);
+          ws.send(JSON.stringify({
+            type: "SIGNED_OUT",
+            message: `${user} logged out`
+          }));
+        } catch (error) {
+          ws.send(JSON.stringify({
+            type: "ERROR",
+            message: `${user} could not be logged out properly`
+          }));
+        }
       }
       break;
     default:
-      ws.send("ERROR: Unknown command\n");
+      ws.send(JSON.stringify({
+        type: "ERROR",
+        mesage: "Unknown command"
+      }));
   }
 }
 
-async function handleDiscussionsCommands(ws: WebSocket, command: string, payload: NewMessagePayload) {
-  const { message } = payload
+async function handleDiscussionsCommands(ws: WebSocket, command: string, payload: DiscussionPayload) {
   switch (command) {
     case "NEW_MESSAGE":
       try {
+        const { message = "" } = payload
         const userName = await userRegService.getUsername(ws);
 
         if (!userName) {
-          ws.send("ERROR: User must be authenticated\n");
+          ws.send(JSON.stringify({
+            type: "ERROR",
+            mesage: "User must be authenticated"
+          }));
           return;
         }
 
-        await messService.createMessage(message, userName);
-        ws.send("Message created\n");
+        const { createdAt } = await messService.createMessage(message, userName);
+        ws.send(JSON.stringify({
+          type: "NEW_MESSAGE_CREATED",
+          data: {
+            message, userName, createdAt
+          }
+        }));
       } catch (error) {
-        ws.send(`ERROR: ${error}\n`);
+        ws.send(JSON.stringify({
+          type: "ERROR",
+          mesage: error.message
+        }));
       }
       break;
 
@@ -75,24 +118,31 @@ async function handleDiscussionsCommands(ws: WebSocket, command: string, payload
       try {
         let lastKey: Record<string, AttributeValue> | undefined = undefined;
         if (payload.lastEvaluatedKey) {
-          lastKey = JSON.parse(Buffer.from(payload.lastEvaluatedKey, "base64").toString());
+          lastKey = JSON.parse(payload.lastEvaluatedKey);
         }
 
-        const nextBatch = await messService.fetchMessages(50, lastKey);
+        const nextBatch = await messService.fetchMessages(10, lastKey);
         ws.send(JSON.stringify({
-          type: "message_history",
-          messages: nextBatch.messages,
+          type: "MESSAGE_HISTORY",
+          messages: sortMessages(nextBatch.messages),
           lastEvaluatedKey: nextBatch.lastEvaluatedKey
-            ? Buffer.from(JSON.stringify(nextBatch.lastEvaluatedKey)).toString("base64")
-            : null
+            ? JSON.stringify(nextBatch.lastEvaluatedKey)
+            : null,
+          totalMessages: nextBatch.totalMessages
         }));
 
       } catch (error) {
-        ws.send(`ERROR: ${error}\n`);
+        ws.send(JSON.stringify({
+          type: "ERROR",
+          mesage: error.message
+        }));
       }
       break;
     default:
-      ws.send("ERROR: Unknown command\n");
+      ws.send(JSON.stringify({
+        type: "ERROR",
+        mesage: "Unknown command"
+      }));
   }
 }
 
@@ -107,11 +157,17 @@ wss.on("connection", (ws: WebSocket) => {
       } else if (["NEW_MESSAGE", "GET_MORE_MESSAGES"].includes(command)) {
         await handleDiscussionsCommands(ws, command, payload);
       } else {
-        ws.send(JSON.stringify({ type: "error", message: "invalid command" }));
+        ws.send(JSON.stringify({
+          type: "ERROR",
+          mesage: "Invalid command"
+        }));
       }
     } catch (error) {
       console.error("Invalid message format:", error);
-      ws.send(JSON.stringify({ type: "error", message: "Invalid message format" }));
+      ws.send(JSON.stringify({
+        type: "ERROR",
+        message: "Invalid message format"
+      }));
     }
   });
 
@@ -149,12 +205,17 @@ redisSubscriber.on("message", (channel: string, data: string) => {
     try {
       const { createdAt, message, userName } = JSON.parse(data) as NewMessageEvent;
       const activeUserNamesIterator = socketManager.getActiveUserNames();
-      for (const userName of activeUserNamesIterator) {
-        const ws = socketManager.getUserSocket(userName);
-        if (ws) {
-          ws.send(`DISCUSSION_UPDATED|${JSON.stringify({ createdAt, message, userName })}\n`);
-        } else {
-          console.error(`No active socket for user ${userName}`);
+      for (const user of activeUserNamesIterator) {
+        if (user !== userName) {
+          const ws = socketManager.getUserSocket(user);
+          if (ws) {
+            ws.send(JSON.stringify({
+              type: "DISCUSSION_UPDATED",
+              data: { createdAt, message, userName }
+            }));
+          } else {
+            console.error(`No active socket for user ${userName}`);
+          }
         }
       }
     } catch (error) {
