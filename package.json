@@ -10,7 +10,7 @@
     "npm": "10.9.2"
   },
   "scripts": {
-    "dev": "concurrently \"npm --prefix packages/server run dev\" \"npm --prefix packages/client run dev\""
+    "dev": "concurrently \"npm --prefix ./server run dev\" \"npm --prefix ./client run dev\""
   },
   "author": "Alvaro Ortega",
   "license": "ISC",
