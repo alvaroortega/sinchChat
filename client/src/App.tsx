@@ -9,13 +9,22 @@ import ErrorPage from './pages/ErrorPage';
 export const WSContext = createContext<UseWebSocketParams | null>(null);
 
 const App: React.FC = () => {
-  const { sendMessage, messages, userName, setUserName, error, socketError, setSocketError } = useWebSocket();
+  const {
+    sendMessage,
+    messages,
+    userName,
+    setUserName,
+    error,
+    socketError,
+    setSocketError,
+    userLoggedIn
+  } = useWebSocket();
 
   return (
-    <WSContext.Provider value={{ sendMessage, messages, userName, setUserName, error, socketError, setSocketError }}>
+    <WSContext.Provider value={{ sendMessage, messages, userName, setUserName, error, socketError, setSocketError, userLoggedIn }}>
       {socketError ? <ErrorPage />
         :
-        (userName === "" ? <Login /> : <ChatRoom />)
+        (userLoggedIn ? <ChatRoom /> : <Login />)
       }
     </WSContext.Provider>
   );

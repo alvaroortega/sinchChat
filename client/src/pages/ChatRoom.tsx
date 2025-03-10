@@ -4,6 +4,7 @@ import { UserOutlined } from "@ant-design/icons";
 import classNames from "classnames";
 import { WSContext } from "../App";
 import { Message } from "../types/types";
+import NotificationError from "../Components/NotificationError";
 
 const { Text } = Typography;
 
@@ -70,6 +71,7 @@ const ChatRoom: React.FC = () => {
 
   return (
     <div className="chatContainer--div">
+      <NotificationError />
       <Button
         className="logout--button"
         color="green"

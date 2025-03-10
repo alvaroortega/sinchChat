@@ -10,7 +10,8 @@ export interface UseWebSocketParams {
   setUserName: (userName: string) => void;
   error: string | null;
   socketError: boolean;
-  setSocketError: (socketError: boolean) => void
+  setSocketError: (socketError: boolean) => void;
+  userLoggedIn: boolean;
 };
 
 export function useWebSocket(): UseWebSocketParams {
@@ -19,6 +20,7 @@ export function useWebSocket(): UseWebSocketParams {
   const [userName, setUserName] = useState<string>("")
   const [error, setError] = useState<string | null>(null)
   const [socketError, setSocketError] = useState<boolean>(false)
+  const [userLoggedIn, setUserLoggedIn] = useState<boolean>(false)
 
   const messagesRef = useRef<Messages | null>(null);
 
@@ -48,6 +50,7 @@ export function useWebSocket(): UseWebSocketParams {
 
       switch (data.type) {
         case "SIGNED_IN":
+          setUserLoggedIn(true);
           setMessages({
             lastEvaluatedKey: data.data.lastEvaluatedKey,
             messages: data.data.messages,
@@ -79,13 +82,14 @@ export function useWebSocket(): UseWebSocketParams {
           });
           break;
         case "ERROR":
-          setError(data.message)
+          setError(data.message);
           break;
       }
     };
 
     socket.onerror = () => {
       setUserName("");
+      setUserLoggedIn(false);
       setSocketError(true)
     };
 
@@ -96,5 +100,14 @@ export function useWebSocket(): UseWebSocketParams {
     };
   }, [userName]);
 
-  return { messages, sendMessage, userName, setUserName, error, socketError, setSocketError };
+  return {
+    messages,
+    sendMessage,
+    userName,
+    setUserName,
+    error,
+    socketError,
+    setSocketError,
+    userLoggedIn
+  };
 }

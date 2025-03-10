@@ -49,7 +49,7 @@ async function handleUserRegistration(ws: WebSocket, command: string, payload: U
       } catch (error) {
         ws.send(JSON.stringify({
           type: "ERROR",
-          mesage: error.message
+          message: error.message
         }));
       }
       break;
@@ -58,7 +58,7 @@ async function handleUserRegistration(ws: WebSocket, command: string, payload: U
       if (!user) {
         ws.send(JSON.stringify({
           type: "ERROR",
-          mesage: "User does not exists"
+          message: "User does not exists"
         }));
       } else {
         try {
@@ -79,7 +79,7 @@ async function handleUserRegistration(ws: WebSocket, command: string, payload: U
     default:
       ws.send(JSON.stringify({
         type: "ERROR",
-        mesage: "Unknown command"
+        message: "Unknown command"
       }));
   }
 }
@@ -94,7 +94,7 @@ async function handleDiscussionsCommands(ws: WebSocket, command: string, payload
         if (!userName) {
           ws.send(JSON.stringify({
             type: "ERROR",
-            mesage: "User must be authenticated"
+            message: "User must be authenticated"
           }));
           return;
         }
@@ -107,9 +107,10 @@ async function handleDiscussionsCommands(ws: WebSocket, command: string, payload
           }
         }));
       } catch (error) {
+        console.log('HELLOOOOOOOOOOOO')
         ws.send(JSON.stringify({
           type: "ERROR",
-          mesage: error.message
+          message: error.message
         }));
       }
       break;
@@ -134,14 +135,14 @@ async function handleDiscussionsCommands(ws: WebSocket, command: string, payload
       } catch (error) {
         ws.send(JSON.stringify({
           type: "ERROR",
-          mesage: error.message
+          message: error.message
         }));
       }
       break;
     default:
       ws.send(JSON.stringify({
         type: "ERROR",
-        mesage: "Unknown command"
+        message: "Unknown command"
       }));
   }
 }
@@ -159,7 +160,7 @@ wss.on("connection", (ws: WebSocket) => {
       } else {
         ws.send(JSON.stringify({
           type: "ERROR",
-          mesage: "Invalid command"
+          message: "Invalid command"
         }));
       }
     } catch (error) {
